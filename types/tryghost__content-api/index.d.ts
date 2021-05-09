@@ -70,6 +70,10 @@ export interface Settings extends Metadata, CodeInjection, SocialMedia {
         label: string;
         url: string;
     }>;
+    secondary_navigation?: Array<{
+        label: string;
+        url: string;
+    }>;
     url?: string;
 }
 
@@ -88,7 +92,7 @@ export interface Author extends Identification, Metadata {
     };
 }
 
-export type TagVisibility = 'public' | 'draft' | 'scheduled';
+export type TagVisibility = 'public' | 'internal';
 
 export interface Tag extends Identification, Metadata {
     name?: string;

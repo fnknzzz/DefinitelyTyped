@@ -89,7 +89,7 @@ declare namespace ArangoDB {
         | "network authentication required";
     type EdgeDirection = "any" | "inbound" | "outbound";
     type EngineType = "mmfiles" | "rocksdb";
-    type IndexType = "hash" | "skiplist" | "fulltext" | "geo" | "ttl";
+    type IndexType = "persistent" | "hash" | "skiplist" | "fulltext" | "geo" | "ttl";
     type ViewType = "arangosearch";
     type KeyGeneratorType = "traditional" | "autoincrement";
     type ErrorName =
@@ -511,6 +511,8 @@ declare namespace ArangoDB {
         unique?: boolean;
         deduplicate?: boolean;
         expireAfter?: number;
+        name?: string;
+        minLength?: number;
     }
 
     interface Index<T extends object = any> {
@@ -657,7 +659,7 @@ declare namespace ArangoDB {
         document(
             selectors: ReadonlyArray<string | DocumentLike>
         ): Array<Document<T>>;
-        exists(name: string): boolean;
+        exists(name: string): DocumentMetadata | false;
         firstExample(example: Partial<Document<T>>): Document<T> | null;
         getResponsibleShard(document: DocumentLike): string;
         insert(data: DocumentData<T>, options?: InsertOptions): InsertResult<T>;
@@ -905,9 +907,9 @@ declare namespace ArangoDB {
         write?: string | string[];
         allowImplicit?: boolean;
     }
-    interface Transaction {
+    interface Transaction<ReturnType = any> {
         collections: TransactionCollections | string[];
-        action: (params: object) => void | string;
+        action: (params: object) => ReturnType;
         waitForSync?: boolean;
         lockTimeout?: number;
         params?: object;
@@ -991,7 +993,7 @@ declare namespace ArangoDB {
         // Global
         _engine(): EngineType;
         _engineStats(): { [key: string]: any };
-        _executeTransaction(transaction: Transaction): void;
+        _executeTransaction<T>(transaction: Transaction<T>): T;
     }
 }
 
@@ -1036,12 +1038,12 @@ declare namespace Foxx {
 
     interface ValidationResult<T> {
         value: T;
-        error: any;
+        error?: any;
+        errors?: any;
     }
 
     interface Schema {
-        isJoi: boolean;
-        validate<T>(value: T): ValidationResult<T>;
+        validate<T>(value: T, options?: any): ValidationResult<T>;
     }
 
     interface Model {
@@ -1135,13 +1137,21 @@ declare namespace Foxx {
         tests?: string[];
     }
 
+    interface Configuration {
+        [key: string]: any;
+    }
+
+    interface Dependencies {
+        [key: string]: any;
+    }
+
     interface Context {
         argv: any[];
         basePath: string;
         baseUrl: string;
         collectionPrefix: string;
-        configuration: { [key: string]: any };
-        dependencies: { [key: string]: any };
+        configuration: Configuration;
+        dependencies: Dependencies;
         isDevelopment: boolean;
         isProduction: boolean;
         manifest: Manifest;
@@ -1432,6 +1442,7 @@ declare module "@arangodb" {
     function aql(strings: TemplateStringsArray, ...args: any[]): ArangoDB.Query;
     namespace aql {
         function literal(value: any): ArangoDB.AqlLiteral;
+        function join(values: any[], sep?: string): ArangoDB.Query;
     }
     function query(
         strings: TemplateStringsArray,
@@ -1644,6 +1655,7 @@ declare module "@arangodb/foxx/sessions/transports/header" {
 declare module "@arangodb/foxx/auth" {
     interface AuthData {
         method: string;
+        iter?: number;
         salt: string;
         hash: string;
     }
@@ -1655,7 +1667,12 @@ declare module "@arangodb/foxx/auth" {
         method?: ArangoDB.HashAlgorithm;
         saltLength?: number;
     }
-    function createAuth(options?: AuthOptions): Authenticator;
+    interface Pbkdf2AuthOptions {
+        method: "pbkdf2";
+        saltLength?: number;
+        workFactor?: number;
+    }
+    function createAuth(options?: AuthOptions | Pbkdf2AuthOptions): Authenticator;
     export = createAuth;
 }
 

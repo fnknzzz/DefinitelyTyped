@@ -5,10 +5,15 @@
 //                 Kamontat Chantrachirathumrong <https://github.com/kamontat>
 //                 theweirdone <https://github.com/theweirdone>
 //                 whoaa512 <https://github.com/whoaa512>
+//                 John Reilly <https://github.com/johnnyreilly>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.9
 
+/// <reference types="node" />
+
 export = prompts;
+
+import { Readable, Writable } from 'stream';
 
 declare function prompts<T extends string = string>(
     questions: prompts.PromptObject<T> | Array<prompts.PromptObject<T>>,
@@ -55,10 +60,12 @@ declare namespace prompts {
         function toggle(args: PromptObject): void;
     }
 
+    // Based upon: https://github.com/terkelg/prompts/blob/d7d2c37a0009e3235b2e88a7d5cdbb114ac271b2/lib/elements/select.js#L29
     interface Choice {
         title: string;
         value: any;
-        disable?: boolean;
+        disabled?: boolean;
+        selected?: boolean;
         description?: string;
     }
 
@@ -72,23 +79,27 @@ declare namespace prompts {
         name: ValueOrFunc<T>;
         message?: ValueOrFunc<string>;
         initial?: string | number | boolean | Date;
-        style?: string;
+        style?: string | PrevCaller<T, string | Falsy>;
         format?: PrevCaller<T, void>;
         validate?: PrevCaller<T, boolean | string | Promise<boolean | string>>;
         onState?: PrevCaller<T, void>;
-        min?: number;
-        max?: number;
-        float?: boolean;
-        round?: number;
-        increment?: number;
-        separator?: string;
-        active?: string;
-        inactive?: string;
-        choices?: Choice[];
-        hint?: string;
+        min?: number | PrevCaller<T, number | Falsy>;
+        max?: number | PrevCaller<T, number | Falsy>;
+        float?: boolean | PrevCaller<T, boolean | Falsy>;
+        round?: number | PrevCaller<T, number | Falsy>;
+        instructions?: string | boolean;
+        increment?: number | PrevCaller<T, number | Falsy>;
+        separator?: string | PrevCaller<T, string | Falsy>;
+        active?: string | PrevCaller<T, string | Falsy>;
+        inactive?: string | PrevCaller<T, string | Falsy>;
+        choices?: Choice[] | PrevCaller<T, Choice[] | Falsy>;
+        hint?: string | PrevCaller<T, string | Falsy>;
+        warn?: string | PrevCaller<T, string | Falsy>;
         suggest?: ((input: any, choices: Choice[]) => Promise<any>);
-        limit?: number;
-        mask?: string;
+        limit?: number | PrevCaller<T, number | Falsy>;
+        mask?: string | PrevCaller<T, string | Falsy>;
+        stdout?: Writable;
+        stdin?: Readable;
     }
 
     type Answers<T extends string> = { [id in T]: any };

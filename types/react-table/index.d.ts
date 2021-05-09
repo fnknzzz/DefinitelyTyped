@@ -1,4 +1,4 @@
-// Type definitions for react-table 7.0
+// Type definitions for react-table 7.7
 // Project: https://github.com/tannerlinsley/react-table
 // Definitions by: Guy Gascoigne-Piggford <https://github.com/ggascoigne>,
 //                 Michael Stramel <https://github.com/stramel>
@@ -6,7 +6,7 @@
 //                 Jason Clark <https://github.com/riceboyler>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 3.5
-// reflects react-table@7.0.4
+// reflects react-table@7.7.0
 
 // tslint:disable:no-empty-interface
 // no-empty-interface is disabled to allow easy extension with declaration merging
@@ -18,6 +18,7 @@
 // The changelog for the important changes is located in the Readme.md
 
 import {
+    ChangeEvent,
     ComponentType,
     DependencyList,
     EffectCallback,
@@ -139,7 +140,7 @@ export interface TableRowProps extends TableKeyedProps {}
 export interface TableCellProps extends TableKeyedProps {}
 
 export interface TableToggleCommonProps extends TableCommonProps {
-    onChange?: () => void;
+    onChange?: (e: ChangeEvent) => void;
     checked?: boolean;
     title?: string;
     indeterminate?: boolean;
@@ -169,11 +170,12 @@ export type UseTableOptions<D extends object> = {
     data: D[];
 } & Partial<{
     initialState: Partial<TableState<D>>;
-    stateReducer: (newState: TableState<D>, action: ActionType, previousState: TableState<D>) => TableState<D>;
+    stateReducer: (newState: TableState<D>, action: ActionType, previousState: TableState<D>, instance?: TableInstance<D>) => TableState<D>;
     useControlledState: (state: TableState<D>, meta: Meta<D>) => TableState<D>;
     defaultColumn: Partial<Column<D>>;
     getSubRows: (originalRow: D, relativeIndex: number) => D[];
     getRowId: (originalRow: D, relativeIndex: number, parent?: Row<D>) => string;
+    autoResetHiddenColumns: boolean;
 }>;
 
 export type PropGetter<D extends object, Props, T extends object = never, P = Partial<Props>> =
@@ -272,7 +274,7 @@ export interface UseTableInstanceProps<D extends object> {
 }
 
 export interface UseTableHeaderGroupProps<D extends object> {
-    headers: Array<ColumnInstance<D>>;
+    headers: Array<HeaderGroup<D>>;
     getHeaderGroupProps: (propGetter?: HeaderGroupPropGetter<D>) => TableHeaderProps;
     getFooterGroupProps: (propGetter?: FooterGroupPropGetter<D>) => TableFooterProps;
     totalHeaderCount: number; // not documented
@@ -280,7 +282,7 @@ export interface UseTableHeaderGroupProps<D extends object> {
 
 export interface UseTableColumnProps<D extends object> {
     id: IdType<D>;
-    columns: Array<ColumnInstance<D>>;
+    columns?: Array<ColumnInstance<D>>;
     isVisible: boolean;
     render: (type: 'Header' | 'Footer' | string, props?: object) => ReactNode;
     totalLeft: number;
@@ -288,15 +290,15 @@ export interface UseTableColumnProps<D extends object> {
     getHeaderProps: (propGetter?: HeaderPropGetter<D>) => TableHeaderProps;
     getFooterProps: (propGetter?: FooterPropGetter<D>) => TableFooterProps;
     toggleHidden: (value?: boolean) => void;
-    parent: ColumnInstance<D>; // not documented
+    parent?: ColumnInstance<D>; // not documented
     getToggleHiddenProps: (userProps?: any) => any;
     depth: number; // not documented
-    index: number; // not documented
     placeholderOf?: ColumnInstance;
 }
 
 export interface UseTableRowProps<D extends object> {
     cells: Array<Cell<D>>;
+    allCells: Array<Cell<D>>;
     values: Record<IdType<D>, CellValue>;
     getRowProps: (propGetter?: RowPropGetter<D>) => TableRowProps;
     index: number;
@@ -412,6 +414,7 @@ export interface UseExpandedRowProps<D extends object> {
     subRows: Array<Row<D>>;
     toggleRowExpanded: (value?: boolean) => void;
     getToggleRowExpandedProps: (props?: Partial<TableExpandedToggleProps>) => TableExpandedToggleProps;
+    depth: number;
 }
 
 //#endregion
@@ -547,7 +550,7 @@ export type UseGroupByOptions<D extends object> = Partial<{
     disableGroupBy: boolean;
     defaultCanGroupBy: boolean;
     aggregations: Record<string, AggregatorFn<D>>;
-    groupByFn: (rows: Array<Row<D>>, columnId: IdType<D>) => Record<string, Row<D>>;
+    groupByFn: (rows: Array<Row<D>>, columnId: IdType<D>) => Record<string, Array<Row<D>>>;
     autoResetGroupBy?: boolean;
 }>;
 
@@ -564,7 +567,6 @@ export type UseGroupByColumnOptions<D extends object> = Partial<{
     Aggregated: Renderer<CellProps<D>>;
     disableGroupBy: boolean;
     defaultCanGroupBy: boolean;
-    groupByBoundary: boolean;
 }>;
 
 export interface UseGroupByInstanceProps<D extends object> {
@@ -594,10 +596,11 @@ export interface UseGroupByColumnProps<D extends object> {
 
 export interface UseGroupByRowProps<D extends object> {
     isGrouped: boolean;
-    groupById: IdType<D>;
+    groupByID: IdType<D>;
     groupByVal: string;
     values: Record<IdType<D>, AggregatedValue>;
     subRows: Array<Row<D>>;
+    leafRows: Array<Row<D>>;
     depth: number;
     id: string;
     index: number;
@@ -708,6 +711,7 @@ export type UseRowSelectOptions<D extends object> = Partial<{
 export interface UseRowSelectHooks<D extends object> {
     getToggleRowSelectedProps: Array<PropGetter<D, TableToggleRowsSelectedProps>>;
     getToggleAllRowsSelectedProps: Array<PropGetter<D, TableToggleAllRowsSelectedProps>>;
+    getToggleAllPageRowsSelectedProps: Array<PropGetter<D, TableToggleAllRowsSelectedProps>>;
 }
 
 export interface UseRowSelectState<D extends object> {
@@ -718,6 +722,9 @@ export interface UseRowSelectInstanceProps<D extends object> {
     toggleRowSelected: (rowId: IdType<D>, set?: boolean) => void;
     toggleAllRowsSelected: (value?: boolean) => void;
     getToggleAllRowsSelectedProps: (
+        props?: Partial<TableToggleAllRowsSelectedProps>,
+    ) => TableToggleAllRowsSelectedProps;
+    getToggleAllPageRowsSelectedProps: (
         props?: Partial<TableToggleAllRowsSelectedProps>,
     ) => TableToggleAllRowsSelectedProps;
     isAllRowsSelected: boolean;
@@ -811,12 +818,13 @@ export type UseSortByColumnOptions<D extends object> = Partial<{
 export interface UseSortByInstanceProps<D extends object> {
     rows: Array<Row<D>>;
     preSortedRows: Array<Row<D>>;
-    toggleSortBy: (columnId: IdType<D>, descending: boolean, isMulti: boolean) => void;
+    setSortBy: (sortBy: Array<SortingRule<D>>) => void;
+    toggleSortBy: (columnId: IdType<D>, descending?: boolean, isMulti?: boolean) => void;
 }
 
 export interface UseSortByColumnProps<D extends object> {
     canSort: boolean;
-    toggleSortBy: (descending: boolean, multi: boolean) => void;
+    toggleSortBy: (descending?: boolean, multi?: boolean) => void;
     getSortByToggleProps: (props?: Partial<TableSortByToggleProps>) => TableSortByToggleProps;
     clearSortBy: () => void;
     isSorted: boolean;
@@ -826,7 +834,7 @@ export interface UseSortByColumnProps<D extends object> {
 
 export type SortByFn<D extends object> = (rowA: Row<D>, rowB: Row<D>, columnId: IdType<D>, desc?: boolean) => number;
 
-export type DefaultSortTypes = 'alphanumeric' | 'datetime' | 'basic';
+export type DefaultSortTypes = 'alphanumeric' | 'datetime' | 'basic' | 'string' | 'number';
 
 export interface SortingRule<D> {
     id: IdType<D>;
@@ -864,7 +872,7 @@ export function defaultOrderByFn<D extends object = {}>(
 export function defaultGroupByFn<D extends object = {}>(
     rows: Array<Row<D>>,
     columnId: IdType<D>,
-): Record<string, Row<D>>;
+): Record<string, Array<Row<D>>>;
 
 export function makePropGetter(hooks: Hooks, ...meta: any[]): any;
 

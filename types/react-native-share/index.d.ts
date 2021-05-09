@@ -1,4 +1,4 @@
-// Type definitions for react-native-share 3.1
+// Type definitions for react-native-share 3.3
 // Project: https://github.com/react-native-community/react-native-share#readme
 // Definitions by: Mark Nelissen <https://github.com/marknelissen>
 //                 pera <https://github.com/santiagofm>
@@ -26,9 +26,11 @@ declare namespace Share {
         EMAIL = 'email',
         PINTEREST = 'pinterest',
         LINKEDIN = 'linkedin',
+        SMS = 'SMS',
     }
     enum InstagramStories {
         SHARE_BACKGROUND_IMAGE = 'shareBackgroundImage',
+        SHARE_BACKGROUND_VIDEO = 'shareBackgroundVideo',
         SHARE_STICKER_IMAGE = 'shareStickerImage',
         SHARE_BACKGROUND_AND_STICKER_IMAGE = 'shareBackgroundAndStickerImage',
     }
@@ -97,6 +99,7 @@ export interface Options {
     subject?: string;
     activityItemSources?: ActivityItemSource[];
     filename?: string;
+    saveToFiles?: boolean;
     excludedActivityTypes?: string;
     failOnCancel?: boolean;
     showAppsToView?: boolean;

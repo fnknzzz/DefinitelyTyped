@@ -13,10 +13,12 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.7
 
+/// <reference types="node" />
 export * from './api/analytics';
 export * from './api/apex';
 export * from './api/chatter';
 export * from './api/metadata';
+export * from './api/soap';
 export * from './batch';
 export * from './bulk';
 export * from './cache';
@@ -35,3 +37,4 @@ export * from './salesforce-id';
 export * from './salesforce-object';
 export * from './streaming';
 export * from './topic';
+export * from './date';

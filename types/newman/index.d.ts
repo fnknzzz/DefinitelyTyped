@@ -1,10 +1,10 @@
-// Type definitions for newman 4.5
+// Type definitions for newman 5.1
 // Project: https://github.com/postmanlabs/newman
 // Definitions by: Leonid Logvinov <https://github.com/LogvinovLeon>
-//                 Graham McGregor <https://github.com/Graham42>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.4
 
+import * as http from 'http';
 import { EventEmitter } from "events";
 import {
     Collection,
@@ -18,8 +18,16 @@ export interface NewmanRunOptions {
     collection: Collection | CollectionDefinition | string;
     /** An environment JSON / file path for the current collection run. */
     environment?: VariableScope | VariableScopeDefinition | string;
+    /** An override to environment variables.  See: https://github.com/postmanlabs/newman/blob/develop/lib/run/options.js */
+    envVar?: Collection | CollectionDefinition | string;
     /** A globals JSON / file path for the current collection run. */
     globals?: VariableScope | VariableScopeDefinition | string;
+    /** The relative path to export the globals file from the current run to  */
+    exportGlobals?: string;
+    /** The relative path to export the environment file from the current run to */
+    exportEnvironment?: string;
+    /** The relative path to export the collection from the current run to */
+    exportCollection?: string;
     /**
      * Specify the number of iterations to run on the collection. This is
      * usually accompanied by providing a data file reference as
@@ -130,6 +138,13 @@ export interface NewmanRunOptions {
      * The secret client key passphrase.
      */
     sslClientPassphrase?: string;
+    /**
+     * Custom HTTP(S) agents which will be used for making the requests. This allows for use of various proxies (e.g. socks)
+     */
+    requestAgents?: {
+        http?: http.Agent;
+        https?: http.Agent;
+    };
 }
 
 export interface NewmanRunSummary {
@@ -188,4 +203,7 @@ export interface NewmanRunFailure {
 export function run(
     options: NewmanRunOptions,
     callback?: (err: Error | null, summary: NewmanRunSummary) => void
+): EventEmitter;
+export function run(
+    callback: (err: Error | null, summary: NewmanRunSummary) => void
 ): EventEmitter;
